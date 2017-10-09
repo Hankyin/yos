@@ -1,0 +1,14 @@
+{       /*
+                                        一定要加这个大括号，在switch的一个case中是不允许直接
+                                        声明一个变量的，应为这个case有可能不被执行，而后面可能
+                                        会使用到这个变量，从而产生错误。加上大括号可以将变量的
+                                        作用域限制到这个大括号中，也就不可能在其他地方使用这个变量
+                                        了，所以这样不会出错
+                                        */
+                                        u32 remainer = tty->cur_rel % 80;
+                                        u32 space_num = 80 - remainer;
+                                        for(int i = 0;i < space_num;i++)
+                                        {
+                                                tty->out_buf[tty->count++] = ' ';
+                                        }
+                                } 

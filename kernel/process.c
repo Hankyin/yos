@@ -2,15 +2,15 @@
 #include "lib.h"
 #include "global.h"
 #include "tty.h"
+#include "yos.h"
 
-void task();
 void proc();
 
 PROCESS		proc_table[NR_TASKS + NR_PROCS];	//进程控制块表
 PROCESS		*p_proc_ready;
 char		task_stack[STACK_SIZE_TOTAL];
-TASK 		task_table[NR_TASKS] = {{task_tty,STACK_SIZE_TEST,"task_tty"}};
-TASK 		user_proc_table[NR_PROCS] = {{proc,STACK_SIZE_TEST,"proc"}};
+TASK 		task_table[NR_TASKS] = {{task_tty,STACK_SIZE_TEST,"task_tty",0}};
+TASK 		user_proc_table[NR_PROCS] = {{proc,STACK_SIZE_TEST,"proc",1}};
 
 
 void schedule()
@@ -33,7 +33,8 @@ void init_pcb()
         u8              privilege;
         u8              rpl;
         int             eflags;
-	for (i = 0; i < NR_TASKS+NR_PROCS; i++) {
+	for (i = 0; i < NR_TASKS+NR_PROCS; i++) 
+	{
                 if (i < NR_TASKS) {     /* 任务 */
                         p_task    = task_table + i;
                         privilege = PRIVILEGE_TASK;
@@ -69,31 +70,34 @@ void init_pcb()
 		p_proc->regs.esp = (u32)p_task_stack;
 		p_proc->regs.eflags = eflags;
 
-		//p_proc->nr_tty = 0;
+		p_proc->tty = p_task->tty;
 
 		p_task_stack -= p_task->stacksize;
 		p_proc++;
 		p_task++;
 		selector_ldt += 1 << 3;
 	}
-	p_proc_ready = proc_table;
+	//p_proc_ready = proc_table;
         print_str("init_pcb end...\n",PCOLOR_BLACK);
 }
 
-
-void task()
-{
-	while(1)
-	{
-		print_str("T",PCOLOR_BLACK);
-	}
-	print_str("T",PCOLOR_RED);
-}
+ 
 
 void proc()
 {
+	int ch = 0;
+	char str[] = "write\n";
+	write("hello",5);
 	while(1)
 	{
-		//print_str("P",PCOLOR_BLACK);
+
+	}
+
+	
+	while(1)
+	{	
+		//这个循环会出错。
+		write("write",5);
+		get_ticks();
 	}
 }

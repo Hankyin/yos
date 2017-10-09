@@ -10,7 +10,7 @@
 void clock_handler(int irq)
 {
 	
-	//ticks++;
+	ticks++;
 
 	if (k_reenter != 0) {
 		

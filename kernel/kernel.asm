@@ -55,9 +55,11 @@ extern		idt_ptr
 extern		p_proc_ready
 extern		tss
 extern		disp_pos	;字符显示位置
+extern		ticks		;时钟计数值
 extern		k_reenter	;中断重入值
 extern		irq_table	;中断处理函数表
-;extern 		sys_call_table	;系统调用函数表
+extern		proc_table	;进程表
+extern 		sys_call_table	;系统调用函数表
 
 bits	32
 
@@ -129,17 +131,21 @@ csinit:		; 这个跳转指令强制使用刚刚初始化的结构
 	call	init_pcb
 	call	init_irq
 
+	mov	dword [k_reenter],0;
+	mov 	dword [p_proc_ready],proc_table
+	mov 	dword [ticks],0
 	jmp	restart
 	hlt
 
 sys_call:
         call    save
-	push	dword [p_proc_ready]
+	
         sti
 
 	push	ecx
 	push	ebx
-        ;call    [sys_call_table + eax * 4]
+	push	dword [p_proc_ready]
+        call    [sys_call_table + eax * 4]
 	add	esp, 4 * 3
 
         mov     [esi + EAXREG - P_STACKBASE], eax

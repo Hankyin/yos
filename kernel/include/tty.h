@@ -12,18 +12,12 @@ typedef struct s_tty
         u32 tty_num;//当前tty编号
         u8 *out_buf;//输出缓冲
         size_t count;//输出缓冲中有效字符的个数
+        u32 kb_char;//键盘输入的字符,每轮循环更新一次
         u8 *addr_start;//tty显存开始地址
         u32 cur_rel;//tty的光标与显存开始地址之间的相对距离
 }TTY;   
 
 
-typedef struct s_wr_buf
-{
-        char *buf;
-        size_t len;
-        int is_reading;
-        int is_ready;
-}WR_BUF;
 
 void task_tty();
 void set_current_TTY(TTY *tty);
@@ -32,7 +26,7 @@ void tty_read_kb(TTY *tty);
 void tty_read_wrbuf(TTY *tty);
 void tty_write_scr(TTY *tty);
 TTY* get_current_TTY();
-
+void outchar(TTY *tty,u32 pos,char ch);
 
 
 #endif

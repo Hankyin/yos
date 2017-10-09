@@ -42,7 +42,7 @@ typedef struct s_porcess {
 	DESCRIPTOR ldts[LDT_SIZE]; /* local descriptors for code and data */
 	u32 pid;                   /* process id passed in from MM */
 	char p_name[16];           /* name of the process */
-	//u32 nr_tty;			/*启动该进程的tty*/
+	u32 tty;			/*启动该进程的tty*/
 }PROCESS;
 
 
@@ -50,7 +50,7 @@ typedef struct s_task {
     task_f initial_eip;//进程的入口函数指针
     int stacksize;//进程堆栈大小
     char name[32];//进程名
-    //u32 nr_tty;//启动进程的tty
+    u32 tty;//启动进程的tty
 }TASK;
 
 

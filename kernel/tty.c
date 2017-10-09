@@ -10,7 +10,7 @@
 
 
 TTY tty_table[NR_TTY];//tty表应不应该放到全局变量中呢？
-WR_BUF wr_buf[NR_TTY];//sys_write函数会将输出保存在这个缓冲中，然后tty去读取。
+
 
 int current_TTY = 100;//开始指定一个不可能的tty
 
@@ -23,25 +23,18 @@ void task_tty()
                 tty_table[i].addr_start = (u8 *)(V_MEM_BASE + TTY_VMEM_SIZE * i);
                 tty_table[i].cur_rel = 0;
                 tty_table[i].count = 0;
-                memset(tty_table[i].out_buf,'\0',TTY_BUF_SIZE);
-                
-                wr_buf[i].is_ready = 0;
-                wr_buf[i].is_reading = 0;
-                
+                tty_table[i].kb_char = 0;
+                memset(tty_table[i].out_buf,'\0',TTY_BUF_SIZE);                
         }
         
         tty_table[0].cur_rel = disp_pos / 2;
-        set_current_TTY(&tty_table[0]);
+        set_current_TTY(&tty_table[1]);
         
         while(1)
-        {
-                
+        {               
                 for(int i = 0;i < NR_TTY;i++)
-                {
-                        
-                        tty_read_kb(&tty_table[i]);
-                        //tty_read_wrbuf(&tty_table[i]);
-                        
+                { 
+                        //tty_read_kb(&tty_table[i]);
                         tty_write_scr(&tty_table[i]);
                 }
                 
@@ -93,9 +86,7 @@ void tty_read_kb(TTY *tty)
         {
                 return;
         }
-
         u32 raw_key = keyboard_read();
- 
         if((raw_key & FLAG_MAKE))//只处理make code 
         {
                 
@@ -111,26 +102,11 @@ void tty_read_kb(TTY *tty)
                         switch(key)
                         {
                                 case ENTER:  
-                                {       /*
-                                        一定要加这个大括号，在switch的一个case中是不允许直接
-                                        声明一个变量的，应为这个case有可能不被执行，而后面可能
-                                        会使用到这个变量，从而产生错误。加上大括号可以将变量的
-                                        作用域限制到这个大括号中，也就不可能在其他地方使用这个变量
-                                        了，所以这样不会出错
-                                        */
-                                        u32 remainer = tty->cur_rel % 80;
-                                        u32 space_num = 80 - remainer;
-                                        for(int i = 0;i < space_num;i++)
-                                        {
-                                                tty->out_buf[tty->count++] = ' ';
-                                        }
-                                }      
+                                        tty->out_buf[tty->count++] = '\n';
                                         break;
                                 case BACKSPACE:
                                         tty->out_buf[tty->count++] = '\b';
-                                        break;
-                                case LEFT:
-                                        
+                                        break;   
                                 default:
                                         break;
                         }
@@ -177,26 +153,47 @@ void tty_write_scr(TTY *tty)
                 
                 for(int i = 0;i < tty->count;i++)
                 {
-                        u8 *vmem = 0;
-                        //如果是退格键
-                        if(tty->out_buf[i] == '\b')
+                        
+                        char ch = tty->out_buf[i];
+                        switch(ch)
                         {
-                                //如果光标不在开头
-                                if(tty->cur_rel)
-                                {
-                                        tty->cur_rel--;
-                                        vmem = tty->addr_start + tty->cur_rel * 2;
-                                        *vmem++ = ' ';
-                                        *vmem = 0x07;
-                                }
-                                
-                                continue;
+                                case '\b':
+                                        //如果是退格键
+                                        //如果光标不在开头
+                                        if(tty->cur_rel)
+                                        {
+                                                tty->cur_rel--;
+                                                ch = ' ';
+                                                outchar(tty,tty->cur_rel,ch);
+                                                
+                                        }
+                                        
+                                        //如果光标在开头，那就什么也不做
+                                        break;
+                                case '\n':
+                                        //如果是回车
+                                        {       /*
+                                                一定要加这个大括号，在switch的一个case中是不允许直接
+                                                声明一个变量的，应为这个case有可能不被执行，而后面可能
+                                                会使用到这个变量，从而产生错误。加上大括号可以将变量的
+                                                作用域限制到这个大括号中，也就不可能在其他地方使用这个变量
+                                                了，所以这样不会出错
+                                                */
+                                                ch = ' ';
+                                                u32 remainer = tty->cur_rel % 80;
+                                                u32 space_num = 80 - remainer;
+                                                for(int i = 0;i < space_num;i++)
+                                                {
+                                                        outchar(tty,tty->cur_rel,ch);
+                                                        tty->cur_rel++;
+                                                }
+                                                break;
+                                        }  
+                                default:
+                                        outchar(tty,tty->cur_rel,ch);
+                                        tty->cur_rel++;
+                                        break;
                         }
-                        //如果是其他按键
-                        vmem = tty->addr_start + tty->cur_rel * 2;
-                        *vmem++ = tty->out_buf[i];
-                        *vmem = 0x07;
-                        tty->cur_rel++;
                 }
                 tty->count = 0;
 
@@ -221,18 +218,11 @@ void tty_write_scr(TTY *tty)
         }    
 }
 
-void tty_read_wrbuf(TTY *tty)
+void outchar(TTY *tty,u32 pos,char ch)
 {
-        int ttynum = tty->tty_num;
-        if(wr_buf[ttynum].is_ready)
-        {
-                wr_buf[ttynum].is_reading = 1;
-                for(int i = 0;i < wr_buf[ttynum].len;i++)
-                {
-                        tty->out_buf[tty->count] = wr_buf[ttynum].buf[i];
-                        tty->count++;
-                }
-                wr_buf[ttynum].is_reading = 0;
-                wr_buf[ttynum].is_ready =0;
-        } 
+        u8 *p_vmem = 0;
+        p_vmem = tty->addr_start + pos * 2;
+        *p_vmem++ = ch;
+        *p_vmem = 0x07;
+        return;
 }

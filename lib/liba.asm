@@ -3,11 +3,12 @@
 ;
 
 [SECTION .data]
+global	disp_pos
 disp_pos	dd 	0
 
 
 [SECTION .text]
-global	disp_pos
+
 ; 导出函数
 global	memcopy
 global	print_str

@@ -1,0 +1,15 @@
+{
+        "files.associations": {
+                "gdt.h": "c",
+                "idt.h": "c",
+                "process.h": "c",
+                "irq.h": "c",
+                "lib.h": "c",
+                "type.h": "c",
+                "global.h": "c",
+                "keymap.h": "c",
+                "keyboard.h": "c",
+                "syscall.h": "c",
+                "tty.h": "c"
+        }
+}

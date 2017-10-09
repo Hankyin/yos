@@ -27,6 +27,7 @@ DIR_BUILD 	= ./build
 HEAD_KERNEL	= $(DIR_K_INCLUDE)/gdt.h $(DIR_K_INCLUDE)/idt.h $(DIR_K_INCLUDE)/global.h \
 		$(DIR_K_INCLUDE)/clock.h $(DIR_K_INCLUDE)/irq.h $(DIR_K_INCLUDE)/process.h \
 		$(DIR_K_INCLUDE)/keyboard.h $(DIR_K_INCLUDE)/keymap.h $(DIR_K_INCLUDE)/tty.h \
+		$(DIR_K_INCLUDE)/syscall.h $(DIR_K_INCLUDE)/yos.h \
 		$(HEAD_LIB)
 HEAD_LIB	= $(DIR_LIB)/lib.h $(DIR_LIB)/type.h $(DIR_LIB)/x86.h 
 
@@ -35,12 +36,13 @@ SRC_BOOT	= $(DIR_BOOT)/boot.asm $(DIR_BOOT)/fat12hdr.inc
 SRC_LOADER	= $(DIR_BOOT)/loader.asm $(DIR_BOOT)/fat12hdr.inc $(DIR_BOOT)/pm.inc 
 SRC_KERNEL_C	= $(DIR_BUILD)/gdt.c $(DIR_BUILD)/idt.c $(DIR_BUILD)/irq.c \
 		$(DIR_BUILD)/clock.c $(DIR_BUILD)/process.c $(DIR_BUILD)/keyboard.c \
-		$(DIR_BUILD)/tty.c
-SRC_KERNEL_ASM	= $(DIR_BUILD)/kernel.asm $(DIR_LIB)/liba.asm
+		$(DIR_BUILD)/tty.c $(DIR_BUILD)/syscall.c
+SRC_KERNEL_ASM	= $(DIR_BUILD)/kernel.asm $(DIR_LIB)/liba.asm $(DIR_BUILD)/yos.asm 
 #obj文件
 OBJ_KERNEL	= $(DIR_BUILD)/kernel.o $(DIR_BUILD)/gdt.o $(DIR_BUILD)/idt.o \
 		$(DIR_BUILD)/irq.o $(DIR_BUILD)/clock.o $(DIR_BUILD)/process.o \
-		$(DIR_BUILD)/tty.o $(DIR_BUILD)/keyboard.o \
+		$(DIR_BUILD)/tty.o $(DIR_BUILD)/keyboard.o $(DIR_BUILD)/yos.o \
+		$(DIR_BUILD)/syscall.o \
 		$(OBJ_LIB)
 OBJ_LIB		= $(DIR_BUILD)/liba.o $(DIR_BUILD)/libc.o 
 #目标
@@ -74,6 +76,9 @@ $(KERNEL):$(OBJ_KERNEL) $(HEAD_KERNEL) $(HEAD_LIB)
 $(DIR_BUILD)/kernel.o:$(DIR_KERNEL)/kernel.asm
 	$(ASM) $(ASMFLAGS) $< -o $@
 
+$(DIR_BUILD)/yos.o:$(DIR_KERNEL)/yos.asm
+	$(ASM) $(ASMFLAGS) $< -o $@
+
 $(DIR_BUILD)/gdt.o:$(DIR_KERNEL)/gdt.c
 	$(CC) $(CCFLAGS) $< -o $@
 
@@ -93,6 +98,9 @@ $(DIR_BUILD)/keyboard.o:$(DIR_KERNEL)/keyboard.c
 	$(CC) $(CCFLAGS) $< -o $@
 
 $(DIR_BUILD)/tty.o:$(DIR_KERNEL)/tty.c
+	$(CC) $(CCFLAGS) $< -o $@
+
+$(DIR_BUILD)/syscall.o:$(DIR_KERNEL)/syscall.c
 	$(CC) $(CCFLAGS) $< -o $@
 
 #编译lib

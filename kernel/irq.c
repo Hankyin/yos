@@ -7,5 +7,5 @@ void init_irq()
 {
         init_clock();
         init_kerbord();
-        k_reenter = 0;
+
 }
